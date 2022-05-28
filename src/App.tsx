@@ -15,6 +15,7 @@ import { Container } from 'react-bootstrap';
 import auth from "./class/Auth/Auth";
 import cookie from "./class/Cookie/Cookie";
 const base =    cookie.GetCookies("base");
+
 function App() {
   const [userSessionHistoryCompanies, setHistoryCompanies] = useState<ICompanyData[]>([]);
   const [companies, setCompanies] = useState<ICompanyData[]>([]);

@@ -1,9 +1,14 @@
 import { useEffect, useState } from "react";
-import { ICompanyData, IPostCompanyData } from "../../types";
-import CompanyCard from "../CompanyCard/CompanyCard";
 import auth from "../../class/Auth/Auth";
 import cookie from "../../class/Cookie/Cookie";
+import { ICompanyData, IPostCompanyData } from "../../types";
+import CompanyCard from "../CompanyCard/CompanyCard";
+import PostCallDB from "./PostCallDB";
+
+
 const base =    cookie.GetCookies("base");
+
+
 
 interface APICallNBBProps {
     companyVAT: string[],
@@ -19,59 +24,11 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
 
 
     //arranges the post, will be moved to a component of its own.
-    async function PostToHistory(e : ICompanyData) {
 
- 
-        let epost : IPostCompanyData = {
-        address : e.address,
-        companyProfit : e.companyProfit.toString(),
-        debt : e.debt.toString(),
-        depositDate : e.depositDate?.toString(),
-        equitity : e.equitity.toString(),
-        name : e.name,
-        vat : e.vat }
-        console.log(epost)
-        if (auth.Auth()) 
-     
-        try {
-          const response = await fetch(base+'/api/history/history', {
-            method: 'POST',
-            body: JSON.stringify(epost),
-            headers: {
-                'Content-Type': 'application/json',
-                "Access-Control-Allow-Origin": "*",
-                "Access-Control-Allow-Credentials": "true",
-                "Access-Control-Allow-Headers": "Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control",
-                "Access-Control-Allow-Methods": "POST",
-                'Authorization': `Bearer ${cookie.GetCookies("token")}`
-            },
-          });
-      
-          if (!response.ok) {
-            throw new Error(`Error! status: ${response.status}`);
-          }
-          const result = (await response.json());
-      
-          console.log('result is: ', JSON.stringify(result));
-      
-          return result;
-        } catch (error) {
-          if (error instanceof Error) {
-            console.log('error message: ', error.message);
-            return error.message;
-          } else {
-            console.log('unexpected error: ', error);
-            return 'An unexpected error occurred';
-          }
-        }
-      }
     useEffect(() => {
         //for testing purposes please regard changing your localhost port.
         Promise.all([GetCompanyDetails()]);
-        /*
-        GetCompanyDetailsFirst();
-        GetCompanyDetailsSecond();
-        */
+
 
     }, []);
     //response can only be called per method, this is the reason two API call methodes were made.
@@ -94,11 +51,11 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
                     }
                 });
                 let data = await response.json();
+                insertHistroy(data.finalCompanyData[0])
                 dataBucket = [...dataBucket, ...data.finalCompanyData as ICompanyData[]];
             }
 
             catch (error) {
-                console.log("error triggerd!!!!");
                 errorState(errorcount);
 
             }
@@ -123,6 +80,9 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
         }
     }
 
+
+    
+
     /*const GetCompanyDetailsFirst = async () => {
         try {
             setLoading(true);
@@ -139,7 +99,7 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
       
 
             setCompanyInfo(data.finalCompanyData as ICompanyData[]);
-            PostToHistory(data.finalCompanyData .pop())
+           
             setLoading(false);
 
         } catch (error) {
@@ -172,14 +132,69 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
 
     }*/
 
-//renders that the user will see when they've provide the data, condition statements make sure the user will be notified when wrong inputs have been made.
+    //renders that the user will see when they've provide the data, condition statements make sure the user will be notified when wrong inputs have been made.
+
+
+    const insertHistroy = async (company: ICompanyData)=>{
+        setLoading(true);
+
+        let epost: IPostCompanyData = {
+            address: company.address,
+            companyProfit: company.companyProfit.toString(),
+            debt: company.debt.toString(),
+            depositDate: company.depositDate?.toString(),
+            equitity: company.equitity.toString(),
+            name: company.name,
+            vat: company.vat
+        }
+        console.log(epost)
+        if (auth.Auth()) {
+
+            try {
+                const response = await fetch(base+'/api/history/history', {
+                    method: 'POST',
+                    body: JSON.stringify(epost),
+                    headers: {
+                        'Content-Type': 'application/json',
+                        "Access-Control-Allow-Origin": "*",
+                        "Access-Control-Allow-Credentials": "true",
+                        "Access-Control-Allow-Headers": "Content-Type, Depth, User-Agent, X-File-Size, X-Requested-With, If-Modified-Since, X-File-Name, Cache-Control",
+                        "Access-Control-Allow-Methods": "POST",
+                        'Authorization': `Bearer ${cookie.GetCookies("token")}`
+                    },
+                });
+
+                if (!response.ok) {
+                    throw new Error(`Error! status: ${response.status}`);
+                }
+                const result = (await response.json());
+
+                console.log('result is: ', JSON.stringify(result));
+
+                return result;
+            } catch (error) {
+                if (error instanceof Error) {
+                    console.log('error message: ', error.message);
+                    return error.message;
+                } else {
+                    console.log('unexpected error: ', error);
+                    return 'An unexpected error occurred';
+                }
+            }
+
+        }
+
+
+
+        setLoading(false);
+    }
 
 
 
     if (errorState1 === false && errorState2 === false) {
         return (
-            <div  className="d-flex justify-content-around">
-            <CompanyCard companyInfo={companyInfo} />
+            <div className="d-flex justify-content-around">
+                <CompanyCard companyInfo={companyInfo} />
             </div>
         )
     }
@@ -211,7 +226,7 @@ const ApiCallNBB = ({ companyInfo, companyVAT, setCompanyInfo }: APICallNBBProps
             </div>
         )
     }
-    
+
 }
 
 export default ApiCallNBB;
